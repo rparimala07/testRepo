@@ -19,5 +19,10 @@ pipeline {
         archiveArtifacts 'server\\target\\*'
       }
     }
+    stage('Upload to S3') {
+      steps {
+        bat(script: '"C:\\Program Files\\Amazon\\AWSCLI\\aws.exe" s3 cp demo-0.0.1-SNAPSHOT.jar s3://artifact-repo-git/', returnStdout: true, returnStatus: true)
+      }
+    }
   }
 }
