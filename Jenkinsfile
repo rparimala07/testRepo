@@ -6,7 +6,7 @@ pipeline {
         JAVA_HOME = 'C:\\Program Files (x86)\\Java\\jdk1.8.0_171'
       }
       steps {
-        bat 'mvnw package'
+        bat 'cd server && mvnw package'
       }
     }
   }
