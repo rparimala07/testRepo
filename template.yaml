@@ -1,0 +1,166 @@
+Description:
+  Template to Create a Ec2 Instance
+
+Resources:
+  SudharsanSecGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties: 
+      GroupName: AllowHTTPForSudharsan
+      GroupDescription: Allow access to http
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          SourceSecurityGroupId: !GetAtt SudharsanELBSecGroup.GroupId
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+
+  SudharsanELBSecGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties: 
+      GroupName: AllowHTTPForELB
+      GroupDescription: Allow access to http
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+
+  Sudharsan:
+    Type: "AWS::EC2::Instance"
+    Properties: 
+      ImageId: ami-46e1f226
+      InstanceType: t2.micro
+      KeyName: Cali-keypair
+      SecurityGroupIds: 
+        - !Ref SudharsanSecGroup
+      Tags: 
+        - Key: Name
+          Value: "Sudharsan"      
+      UserData:  
+        Fn::Base64:
+          !Sub |
+          #!/bin/bash
+          yum install httpd -y
+          echo  "This is a webserver - Sudharsan" > /var/www/html/index.html
+          service httpd start
+          chkconfig httpd on
+
+  Parimala:
+    Type: "AWS::EC2::Instance"
+    Properties: 
+      ImageId: ami-46e1f226
+      InstanceType: t2.micro
+      KeyName: Cali-keypair
+      SecurityGroupIds: 
+        - !Ref SudharsanSecGroup
+      Tags: 
+        - Key: Name
+          Value: Parimala
+      UserData: 
+        Fn::Base64:
+          !Sub |
+			#!/bin/bash
+			# install updates
+			yum update -y
+			# install java 8
+			yum install java-1.8.0 -y
+			# remove java 1.7
+			yum remove java-1.7.0-openjdk -y
+			#Download from S3
+			#aws s3 cp s3://devopscfn/demo.jar /opt/demo.jar
+			aws s3 cp s3://artifact-repo-git/demo-0.0.1-SNAPSHOT.jar /opt/demo-0.0.1-SNAPSHOT.jar
+			#add permissions
+			chmod 755 /opt/demo-0.0.1-SNAPSHOT.jar
+			#Create a soft link
+			#ln -s /opt/demo-0.0.1-SNAPSHOT.jar /etc/init.d/demo
+			#Start the service
+			java -jar /opt/demo-0.0.1-SNAPSHOT.jar
+			#chkconfig demo on
+
+  
+  ec2webserver:
+    Type: "AWS::EC2::Instance"
+    Properties: 
+      ImageId: ami-15e9c770
+      InstanceType: t2.micro
+      KeyName: sud 
+      SecurityGroupIds: 
+        - Ref: SudharsanSecGroup
+      Tags: 
+        - Key: Name
+          Value: ec2-webserver
+      UserData:
+        Fn::Base64:
+          !Sub |
+          #!/bin/bash
+          yum install httpd -y
+          echo  "This is a webserver - ec2-webserver " > /var/www/html/index.html
+          service httpd start
+          chkconfig httpd on
+
+  SudharsanloadBalancer:
+    DependsOn: SudharsanELBSecGroup
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+      - subnet-7614dd1e
+      - subnet-419ddd0c
+      - subnet-febfbd85
+      LoadBalancerAttributes:
+      - Key: idle_timeout.timeout_seconds
+        Value: '50'
+      SecurityGroups:
+      - !GetAtt SudharsanELBSecGroup.GroupId
+      Tags:
+      - Key: Name
+        Value: ALB
+
+  SudharsanTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 4
+      Matcher:
+        HttpCode: '200'
+      Name: MyTargets
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: '20'
+      Targets:
+      - Id:
+          Ref: Sudharsan
+        Port: 80
+      - Id:
+          Ref: Parimala
+        Port: 80
+      - Id:
+          Ref: ec2webserver
+        Port: 80
+      UnhealthyThresholdCount: 3
+      VpcId: vpc-8b0ccae3
+
+  SudharsanListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: SudharsanTargetGroup
+      LoadBalancerArn:
+        Ref: SudharsanloadBalancer
+      Port: 80
+      Protocol: HTTP
+
+Outputs:
+  WebsiteUrl:
+    Value: !GetAtt SudharsanloadBalancer.DNSName
+
+
