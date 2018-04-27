@@ -27,7 +27,7 @@ pipeline {
         AWS_SHARED_CREDENTIALS_FILE = 'C:\\Users\\Owner\\.aws\\credentials'
       }
       steps {
-        bat(script: '"C:\\Program Files\\Amazon\\AWSCLI\\aws.exe" s3 cp server\\target\\demo-0.0.1-SNAPSHOT.jar s3://artifact-repo-git/', returnStdout: true, returnStatus: true)
+        bat(script: '"C:\\Program Files\\Amazon\\AWSCLI\\aws.exe" --region us-east-1 s3 cp server\\target\\demo-0.0.1-SNAPSHOT.jar s3://artifact-repo-git/', returnStdout: true, returnStatus: true)
       }
     }
     stage('Deploy') {
@@ -35,7 +35,7 @@ pipeline {
         AWS_SHARED_CREDENTIALS_FILE = 'C:\\Users\\Owner\\.aws\\credentials'
       }
       steps {
-        bat(script: '"C:\\Program Files\\Amazon\\AWSCLI\\aws.exe" cloudformation create-stack --stack-name myteststack --template-body file://template.yaml', returnStatus: true, returnStdout: true)
+        bat(script: '"C:\\Program Files\\Amazon\\AWSCLI\\aws.exe" --region us-east-1 cloudformation create-stack --stack-name myteststack --template-body file://template.yaml', returnStatus: true, returnStdout: true)
       }
     }
   }
