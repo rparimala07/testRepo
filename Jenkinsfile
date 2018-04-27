@@ -10,6 +10,9 @@ pipeline {
       }
     }
     stage('Test') {
+      environment {
+        JAVA_HOME = 'C:\\Program Files (x86)\\Java\\jdk1.8.0_171'
+      }
       steps {
         bat(script: 'cd server && mvnw test', returnStatus: true, returnStdout: true)
       }
