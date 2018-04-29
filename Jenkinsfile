@@ -16,7 +16,7 @@ pipeline {
             JAVA_HOME = 'C:\\Program Files (x86)\\Java\\jdk1.8.0_171'
           }
           steps {
-            bat(script: 'cd client && npm install', returnStatus: true, returnStdout: true)
+            bat(script: 'cd client && "C:\\Program Files\\nodejs\\npm" install', returnStatus: true, returnStdout: true)
           }
         }
       }
