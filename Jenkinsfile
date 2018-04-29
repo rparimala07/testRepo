@@ -12,6 +12,9 @@ pipeline {
           }
         }
         stage('Client build') {
+          environment {
+            JAVA_HOME = 'C:\\Program Files (x86)\\Java\\jdk1.8.0_171'
+          }
           steps {
             bat(script: 'cd client && npm install', returnStatus: true, returnStdout: true)
           }
@@ -44,7 +47,7 @@ pipeline {
         AWS_SHARED_CREDENTIALS_FILE = 'C:\\Users\\Owner\\.aws\\credentials'
       }
       steps {
-        bat(script: '"C:\\Program Files\\Amazon\\AWSCLI\\aws.exe" --region us-east-1 cloudformation create-stack --stack-name myteststack --template-body file://template.yaml', returnStatus: true, returnStdout: true)
+        bat(script: '"C:\\Program Files\\Amazon\\AWSCLI\\aws.exe" --region us-east-1 cloudformation create-stack --stack-name myteststack --template-body "file://C:\\Users\\Owner\\testProj\\spring-boot-angular-example\\template.yaml"', returnStatus: true, returnStdout: true)
       }
     }
   }
