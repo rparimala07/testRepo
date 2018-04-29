@@ -2,11 +2,20 @@ pipeline {
   agent any
   stages {
     stage('Build') {
-      environment {
-        JAVA_HOME = 'C:\\Program Files (x86)\\Java\\jdk1.8.0_171'
-      }
-      steps {
-        bat(script: 'cd server && mvnw package', returnStdout: true, returnStatus: true)
+      parallel {
+        stage('Build') {
+          environment {
+            JAVA_HOME = 'C:\\Program Files (x86)\\Java\\jdk1.8.0_171'
+          }
+          steps {
+            bat(script: 'cd server && mvnw package', returnStdout: true, returnStatus: true)
+          }
+        }
+        stage('Client build') {
+          steps {
+            bat(script: 'cd client && npm install', returnStatus: true, returnStdout: true)
+          }
+        }
       }
     }
     stage('Test') {
